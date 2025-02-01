@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ретро Тетрис</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .device {
+            background: #e8e8e8;
+            border-radius: 8px;
+            padding: 30px;
+            width: 380px;
+            box-shadow: 
+                inset 0 0 20px rgba(0,0,0,0.2),
+                -2px -2px 5px rgba(0,0,0,0.2),
+                2px 2px 5px rgba(0,0,0,0.2);
+            border: 2px solid #c0c0c0;
+            background: linear-gradient(145deg, #f0f0f0, #d4d4d4);
+        }
+
+        .game-wrapper {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .tetromino-preview {
+            width: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 10px 0;
+        }
+
+        .tetromino-preview.left {
+            margin-right: 10px;
+        }
+
+        .tetromino-preview.right {
+            margin-left: 10px;
+        }
+
+        .tetromino-shape {
+            width: 100%;
+            aspect-ratio: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+        }
+
+        .tetromino-cell {
+            background: #333;
+            border: 1px solid #a8b298;
+        }
+
+        .tetromino-cell.empty {
+            background: transparent;
+            border: none;
+        }
+
+        .screen-container {
+            background: #c3cbb3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 4px solid #555;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+            flex-grow: 1;
+        }
+
+        #game {
+            background: #a8b298;
+            display: block;
+            border: none;
+            image-rendering: pixelated;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-family: 'Digital-7', monospace;
+            color: #333;
+        }
+
+        .level {
+            color: #333;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        @font-face {
+            font-family: 'Digital-7';
+            src: url('https://fonts.cdnfonts.com/css/digital-7-mono') format('woff');
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+            padding: 0 20px;
+            position: relative;
+        }
+
+        .movement-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            grid-column: 1 / 3;
+            margin-top: 20px;
+        }
+
+        .settings-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .btn {
+            background: #ffd700;
+            border: none;
+            border-radius: 50%;
+            padding: 15px;
+            color: #333;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            box-shadow: 
+                inset -2px -2px 5px rgba(0,0,0,0.3),
+                inset 2px 2px 5px rgba(255,255,255,0.1),
+                0 2px 4px rgba(0,0,0,0.2);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:active {
+            box-shadow: 
+                inset 2px 2px 5px rgba(0,0,0,0.5),
+                inset -2px -2px 5px rgba(255,255,255,0.1);
+        }
+
+        .score {
+            color: #333;
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-shadow: 1px 1px 1px rgba(255,255,255,0.5);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        .model-name {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin-top: 15px;
+            font-family: 'Arial', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .btn.level-btn {
+            background: #ffd700;
+            width: 40px;
+            height: 40px;
+            font-size: 14px;
+        }
+
+        .btn.left-btn {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+        }
+
+        .btn.right-btn {
+            grid-column: 3 / 4;
+            grid-row: 2 / 3;
+        }
+
+        .btn.down-btn {
+            grid-column: 2 / 3;
+            grid-row: 3 / 4;
+        }
+
+        .rotate-btn {
+            grid-column: 4 / 6;
+            justify-self: center;
+            align-self: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="device">
+        <div class="brand">SUPER</div>
+        <div class="game-wrapper">
+            <div class="tetromino-preview left">
+                <div class="tetromino-shape">
+                    <!-- I shape -->
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                </div>
+                <div class="tetromino-shape">
+                    <!-- L shape -->
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                </div>
+                <div class="tetromino-shape">
+                    <!-- S shape -->
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                </div>
+                <div class="tetromino-shape">
+                    <!-- T shape -->
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                </div>
+            </div>
+            <div class="screen-container">
+                <div class="game-info">
+                    <div class="score">СЧЕТ: <span id="score">0</span></div>
+                    <div class="level">УРОВЕНЬ: <span id="level">1</span></div>
+                </div>
+                <canvas id="game" width="240" height="400"></canvas>
+            </div>
+            <div class="tetromino-preview right">
+                <div class="tetromino-shape">
+                    <!-- J shape -->
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                </div>
+                <div class="tetromino-shape">
+                    <!-- O shape -->
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                </div>
+                <div class="tetromino-shape">
+                    <!-- Z shape -->
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                    <div class="tetromino-cell empty"></div>
+                </div>
+            </div>
+        </div>
+        <div class="settings-controls">
+            <button class="btn level-btn" id="level-down">-</button>
+            <button class="btn" id="start">▶</button>
+            <button class="btn level-btn" id="level-up">+</button>
+            <button class="btn" id="pause">⏸</button>
+            <button class="btn" id="sound">♪</button>
+        </div>
+        <div class="controls">
+            <div class="movement-controls">
+                <button class="btn left-btn" id="left">←</button>
+                <div></div>
+                <button class="btn right-btn" id="right">→</button>
+                <button class="btn down-btn" id="down">↓</button>
+            </div>
+            <button class="btn rotate-btn" id="rotate">↻</button>
+        </div>
+        <div class="model-name">BRICK GAME ES-88</div>
+    </div>
+    <script src="tetris.js"></script>
+</body>
+</html> 
