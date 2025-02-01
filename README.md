@@ -43,6 +43,7 @@ git clone https://github.com/Ashav1309/tetris.git
 ### Структура проекта
 
 tetris/
+
 ├── index.html
 
 ├── js/
