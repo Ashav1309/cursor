@@ -44,8 +44,11 @@ git clone https://github.com/Ashav1309/tetris.git
 
 tetris/
 ├── index.html
+
 ├── js/
+
 │ ├── tetris.js
+
 └── README.md
 ```
 
